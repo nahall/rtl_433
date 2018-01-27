@@ -133,11 +133,6 @@ static int wt450_callback(bitbuffer_t *bitbuffer) {
     return 1;
 }
 
-PWM_Precise_Parameters clock_bits_parameters_generic = {
-    .pulse_tolerance	= 20,
-    .pulse_sync_width	= 0,	// No sync bit used
-};
-
 static char *output_fields[] = {
     "time",
     "model",
@@ -151,12 +146,13 @@ static char *output_fields[] = {
 
 r_device wt450 = {
     .name          = "WT450",
-    .modulation    = OOK_PULSE_CLOCK_BITS,
-    .short_limit   = 980,
-    .long_limit    = 1952,
+    .modulation    = OOK_PULSE_DMC,
+    .short_limit   = 980,  // half-bit width 980 us
+    .long_limit    = 1952, // bit width 1952 us
     .reset_limit   = 18000,
+    .tolerance	   = 80, // us
     .json_callback = &wt450_callback,
     .disabled      = 0,
-    .demod_arg     = (uintptr_t)&clock_bits_parameters_generic,
+    .demod_arg     = 0,
     .fields        = output_fields
 };

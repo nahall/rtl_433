@@ -53,7 +53,7 @@ static int chuango_callback(bitbuffer_t *bitbuffer) {
 			case 0x8:	CMD = "Arm"; break;
 			case 0x7:	CMD = "Normal Zone"; break;
 			case 0x6:	CMD = "Home Mode Zone";	break;
-			case 0x5:	CMD = "?"; break;
+			case 0x5:	CMD = "On"; break;
 			case 0x4:	CMD = "Home Mode"; break;
 			case 0x3:	CMD = "Tamper";	break;
 			case 0x2:	CMD = "Alarm"; break;
@@ -84,18 +84,15 @@ static char *output_fields[] = {
 	NULL
 };
 
-PWM_Precise_Parameters pwm_precise_parameters = {
-	.pulse_tolerance	= 40,
-	.pulse_sync_width	= 0,	// No sync bit used
-};
-
 r_device chuango = {
 	.name			= "Chuango Security Technology",
 	.modulation		= OOK_PULSE_PWM_PRECISE,
 	.short_limit	= 568,	// Pulse: Short 568µs, Long 1704µs
 	.long_limit		= 1704,	// Gaps:  Short 568µs, Long 1696µs
 	.reset_limit	= 1800,	// Intermessage Gap 17200µs (individually for now)
+	.sync_width 	= 0,	// No sync bit used
+	.tolerance  	= 160, // us
 	.json_callback	= &chuango_callback,
 	.disabled		= 0,
-	.demod_arg		= (uintptr_t)&pwm_precise_parameters,
+	.demod_arg		= 0,
 };

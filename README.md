@@ -14,9 +14,15 @@ Installation instructions:
 
 Compiling rtl_433 requires [rtl-sdr](http://sdr.osmocom.org/trac/wiki/rtl-sdr) to be installed.
 
-Depending on your system, you may also need to install the following libraries:
+Depending on your system, you may also need to install the following libraries.
+
+Debian:
 
     sudo apt-get install libtool libusb-1.0.0-dev librtlsdr-dev rtl-sdr
+
+Centos/Fedora/RHEL (for Centos/RHEL with enabled EPEL):
+
+    sudo dnf install libtool libusb-devel rtl-sdr-devel rtl-sdr
 
 Installation using cmake:
 
@@ -46,6 +52,7 @@ Running:
 ```
 Usage:	= Tuner options =
 	[-d <RTL-SDR USB device index>] (default: 0)
+	[-d :<RTL-SDR USB device serial (can be set with rtl_eeprom -s)>]
 	[-g <gain>] (default: 0 for auto)
 	[-f <frequency>] [-f...] Receive frequency(s) (default: 433920000 Hz)
 	[-H <seconds>] Hop interval for polling of multiple frequencies (default: 600 seconds)
@@ -55,6 +62,7 @@ Usage:	= Tuner options =
 	= Demodulator options =
 	[-R <device>] Enable only the specified device decoding protocol (can be used multiple times)
 	[-G] Enable all device protocols, included those disabled by default
+	[-X <spec> | help] Add a general purpose decoder (-R 0 to disable all other decoders)
 	[-l <level>] Change detection level used to determine pulses [0-16384] (0 = auto) (default: 0)
 	[-z <value>] Override short value in data decoder
 	[-x <value>] Override long value in data decoder
@@ -66,7 +74,7 @@ Usage:	= Tuner options =
 	[-D] Print debug info on event (repeat for more info)
 	[-q] Quiet mode, suppress non-data messages
 	[-W] Overwrite mode, disable checks to prevent files from being overwritten
-	[-y <code>] Verify decoding of raw data (e.g. "{25}fb2dd58") with enabled devices
+	[-y <code>] Verify decoding of demodulated test data (e.g. "{25}fb2dd58") with enabled devices
 	= File I/O options =
 	[-t] Test signal auto save. Use it together with analyze mode (-a -t). Creates one file per signal
 		 Note: Saves raw I/Q samples (uint8 pcm, 2 channel). Preferred mode for generating test files
@@ -78,10 +86,11 @@ Usage:	= Tuner options =
 		 3 = Raw I/Q samples (cf32, 2 channel)
 		 Note: If output file is specified, input will always be I/Q
 	[-F] kv|json|csv Produce decoded output in given format. Not yet supported by all drivers.
-		append output to file with :<filename> (e.g. -F csv:log.csv), defaults to stdout.
+		 append output to file with :<filename> (e.g. -F csv:log.csv), defaults to stdout.
 	[-C] native|si|customary Convert units in decoded output.
 	[-T] specify number of seconds to run
 	[-U] Print timestamps in UTC (this may also be accomplished by invocation with TZ environment variable set).
+	[-E] Stop after outputting successful event(s)
 	[<filename>] Save data stream to output file (a '-' dumps samples to stdout)
 
 Supported device protocols:
@@ -97,11 +106,11 @@ Supported device protocols:
     [10]* Acurite 896 Rain Gauge
     [11]  Acurite 609TXC Temperature and Humidity Sensor
     [12]  Oregon Scientific Weather Sensor
-    [13]  Mebus 433
+    [13]* Mebus 433
     [14]* Intertechno 433
     [15]  KlikAanKlikUit Wireless Switch
     [16]  AlectoV1 Weather Sensor (Alecto WS3500 WS4500 Ventus W155/W044 Oregon)
-    [17]* Cardin S466-TX2
+    [17]  Cardin S466-TX2
     [18]  Fine Offset Electronics, WH2 Temperature/Humidity Sensor
     [19]  Nexus Temperature & Humidity Sensor
     [20]  Ambient Weather Temperature Sensor
@@ -121,7 +130,7 @@ Supported device protocols:
     [34]  LaCrosse WS-2310 Weather Station
     [35]  Esperanza EWS
     [36]  Efergy e2 classic
-    [37]* Inovalley kw9015b rain and Temperature weather station
+    [37]* Inovalley kw9015b, TFA Dostmann 30.3161 (Rain and temperature sensor)
     [38]  Generic temperature sensor 1
     [39]  WG-PB12V1
     [40]* Acurite 592TXR Temp/Humidity, 5n1 Weather Station, 6045 Lightning
@@ -157,7 +166,7 @@ Supported device protocols:
     [70]  Honeywell Door/Window Sensor
     [71]  Maverick ET-732/733 BBQ Sensor
     [72]* RF-tech
-    [73]  LaCrosse TX141TH-Bv2 sensor
+    [73]  LaCrosse TX141-Bv2/TX141TH-Bv2 sensor
     [74]  Acurite 00275rm,00276rm Temp/Humidity with optional probe
     [75]  LaCrosse TX35DTH-IT Temperature sensor
     [76]  LaCrosse TX29IT Temperature sensor
@@ -175,6 +184,15 @@ Supported device protocols:
     [88]  Toyota TPMS
     [89]  Ford TPMS
     [90]  Renault TPMS
+    [91]* inFactory
+    [92]  FT-004-B Temperature Sensor
+    [93]  Ford Car Key
+    [94]  Philips outdoor temperature sensor
+    [95]  Schrader TPMS EG53MA4
+    [96]  Nexa
+    [97]  Thermopro TP12 Thermometer
+    [98]  GE Color Effects
+    [99]  X10 Security
 
 * Disabled by default, use -R n or -G
 
@@ -189,7 +207,7 @@ Examples:
 | `rtl_433 -p NN -R 1 -R 9 -R 36 -R 40` | Typical usage: Enable device decoders for desired devices. Correct rtl-sdr tuning error (ppm offset).
 | `rtl_433 -a` | Will run in analyze mode and you will get a text description of the received signal.
 | `rtl_433 -A` | Enable pulse analyzer. Summarizes the timings of pulses, gaps, and periods. Can be used in either the normal decode mode, or analyze mode.
-| `rtl_433 -a -t` | Will run in analyze mode and save a test file per detected signal (gfile###.data). Format is uint8, 2 channels.
+| `rtl_433 -a -t` | Will run in analyze mode and save a test file per detected signal (`g###_###M_###k.cu8`). Format is uint8, 2 channels.
 | `rtl_433 -r file_name` | Play back a saved data file.
 | `rtl_433 file_name` | Will save everything received from the rtl-sdr during the session into a single file. The saves file may become quite large depending on how long rtl_433 is left running. Note: saving signals into individual files wint `rtl_433 -a -t` is preferred.
 | `rtl_433 -F json -U \| mosquitto_pub -t home/rtl_433 -l` | Will pipe the output to network as JSON formatted MQTT messages. A test MQTT client can be found in `tests/mqtt_rtl_433_test.py`.
@@ -205,10 +223,10 @@ Note: Not all device protocol decoders are enabled by default. When testing to s
 is decoded by rtl_433, use `-G` to enable all device protocols.
 
 The first step in decoding new devices is to record the signals using `-a -t`. The signals will be
-stored individually in files named gfileNNN.data that can be played back with `rtl_433 -r gfileNNN.data`.
+stored individually in files named gNNN_FFFM_RRRk.cu8 that can be played back with `rtl_433 -r gNNN_FFFM_RRRk.cu8`.
 
 These files are vital for understanding the signal format as well as the message data.  Use both analyzers
-`-a` and `-A` to look at the recorded signal and determine the pulse characteristics, e.g. `rtl_433 -r gfileNNN.data -a -A`.
+`-a` and `-A` to look at the recorded signal and determine the pulse characteristics, e.g. `rtl_433 -r gNNN_FFFM_RRRk.cu8 -a -A`.
 
 Make sure you have recorded a proper set of test signals representing different conditions together
 with any and all information about the values that the signal should represent. For example, make a
